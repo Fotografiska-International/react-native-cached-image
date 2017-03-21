@@ -90,14 +90,15 @@ function ensurePath(filePath) {
  * @param toFile
  * @returns {Promise}
  */
-function downloadImage(fromUrl, toFile) {
+function downloadImage(fromUrl, headers, toFile) {
     // use toFile as the key as is was created using the cacheKey
     if (!_.has(activeDownloads, toFile)) {
         // create an active download for this file
         activeDownloads[toFile] = new Promise((resolve, reject) => {
             const downloadOptions = {
                 fromUrl,
-                toFile
+                toFile,
+                headers
             };
             RNFS.downloadFile(downloadOptions).promise
                 .then(res => {
@@ -139,7 +140,7 @@ function runPrefetchTask(prefetcher, options) {
         // check cache
         return getCachedImagePath(url, options)
         // if not found download
-            .catch(() => cacheImage(url, options))
+            .catch(() => cacheImage(url, null, options))
             // then run next task
             .then(() => runPrefetchTask(prefetcher, options));
     }
@@ -175,10 +176,10 @@ function getCachedImagePath(url, options = defaultOptions) {
         })
 }
 
-function cacheImage(url, options = defaultOptions) {
+function cacheImage(url, headers, options = defaultOptions) {
     const filePath = getCachedImageFilePath(url, options);
     return ensurePath(filePath)
-        .then(() => downloadImage(url, filePath));
+        .then(() => downloadImage(url, headers, filePath));
 }
 
 function deleteCachedImage(url, options = defaultOptions) {
